@@ -16,8 +16,23 @@ class MovieListViewModel{
     private let httpClient:HttpClient
     @Published var loadingCompleted :Bool = false
     
+    private var searchSubject = CurrentValueSubject<String,Never>("")
+    
     init(httpClient:HttpClient){
         self.httpClient = httpClient
+        setupSearchPublisher()
+    }
+    
+    private func setupSearchPublisher(){
+        searchSubject
+            .debounce(for: .seconds(0.5), scheduler: DispatchQueue.main)
+            .sink {[weak self] searchText in
+            self?.loadMovies(search: searchText)
+        }.store(in: &cancellable)
+    }
+    
+    func setSearchText(_ searchText:String){
+        searchSubject.send(searchText)
     }
     
     func loadMovies(search:String){
